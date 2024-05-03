@@ -10,6 +10,9 @@ cnx = mysql.connector.connect(user='freedb_FcamUser', password='eqxkFmcDr6PE9#*'
                               database='freedb_FCAM_DB',
                               autocommit = True)
 
+#used for the text inputs
+backOutText = " Enter nothing to back out: "
+
 def main():
     menu()
 
@@ -103,8 +106,11 @@ def viewAllTechnicians():
 # insert one machine into the database
 def insertMachine():
     ClearConsole()
-    newName = input("What is this machine's name?: ")
     
+    returnTup = checkInput("What is this machine's name?: " + backOutText, False)
+    if not returnTup[0]:
+        return
+    newName = returnTup[1]
     
     cursor = cnx.cursor()
     args = (newName,)
@@ -115,18 +121,30 @@ def insertMachine():
     WaitForKeypress()
 
 
+'''
+Creates a work ticket for a machine ID. Ask if user wishes to assign it immediately or wait.
 
+TODO:
+Loop asking for parts needed for the work ticket
+call "fcam_InsertTicketPart(inTickID, inPartID), you can use the 
+'''
 def createTicket(): ####################################################
     ClearConsole()
-    inMachID = input("Enter Machine ID: ")
+
+    returnTup = checkInput("Enter Machine ID. " + backOutText, True)
+    if not returnTup[0]:
+        return
+    
+    inMachID = returnTup[1]
     outTickID = 0
     endText = "\n\nWork ticket created."
 
     cursor = cnx.cursor()
     args = (inMachID, outTickID)
-    resultArgs = cursor.callproc("fcam_CreateWorkTicket", args)
-
-    print("Ticket # " + str(result_args[1]) + " has been created.") 
+    resultArgs = cursor.callproc("fcam_CreateWorkTicket", args)    
+    cursor.close()
+    
+    print("Ticket # " + str(resultArgs[1]) + " has been created.") 
     print("Would you like to assign this Work Ticket to a technician now?")
     if WaitForYesNo():
         assignTech(resultArgs[1])
@@ -134,7 +152,6 @@ def createTicket(): ####################################################
     else:
         endText += " Work Ticket NOT assigned to a technician."
 
-    cursor.close()
 
     print(endText)
     WaitForKeypress()
@@ -148,18 +165,20 @@ def assignTech(inTickID):  ################################################
         print("Available tickets are as follows.")
         listTickets(True)
         
-        inPrompt = "Which ticket would you like to assign? Enter nothing to back out: "
-        returnTup = CheckInput(inPrompt, True)
+        inPrompt = "Which ticket would you like to assign?" + backOutText
+        returnTup = checkInput(inPrompt, True)
     
         if not returnTup[0]:
             return    
         inTickID = returnTup[1]
 
-    inTechID = input("Enter tech ID (either 420 or 690): ")
-    
+    inPrompt = "Enter tech ID (either 420 or 690)." + backOutText
+    returnTup = checkInput(inPrompt, True)
+    if not returnTup[1]:
+        return
 
     cursor = cnx.cursor()
-    args = (inTickID, inTechID)
+    args = (inTickID, returnTup[1])
     cursor.callproc("fcam_AssignWorkTicket", args) 
 
     cursor.close()
@@ -239,9 +258,9 @@ def completeWorkTicket():
     
     print("Current incomplete tickets.\n\n")
     listTickets(True)
-    inPrompt = "Input Ticket No. to mark as complete. Enter nothing to return.\nComplete Ticket No: "
+    inPrompt = "Input Ticket No. to mark as complete. " + backOutText.strip(": ") + ".\nComplete Ticket No: "
     
-    returnTup = CheckInput(inPrompt, True)
+    returnTup = checkInput(inPrompt, True)
     
     if not returnTup[0]:
         return    
@@ -280,7 +299,7 @@ def WaitForYesNo():
 # intOnly determines if the input MUST be an int; Will repeat until either white space or
 # an int is used as an input
 # RETURN IS A TUPLE, INDEX 0 IS FALSE IF NOTHING WAS ENTERED, TRUE OTHERWISE            
-def CheckInput(inPrompt, intOnly):
+def checkInput(inPrompt, intOnly):
     while True:
         userInput = input(inPrompt)
         # check if userInput is a valid input. strip() will return FALSE if there is only white space
