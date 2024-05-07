@@ -260,8 +260,15 @@ def listTickets(onlyIncom):
         print ("""\t\tTICKET NO. {}
                 FOR MACHINE NO.{}, NAME: {}
                 DATE CREATED: {}, DATE COMPLETED: {}
-                ASSIGNED TO TECH NO. {}\n""".format(tickID, machID, machName, dateCreated, dateCompleted, techAssigned))
-
+                ASSIGNED TO TECH NO. {}
+                WITH PARTS: """.format(tickID, machID, machName, dateCreated, dateCompleted, techAssigned), end = " ")
+        cursor2 = cnx.cursor()
+        query = "select partName from partOrderNameView where tickID = %s"
+        cursor2.execute(query, (tickID,))
+        for (partName) in cursor2:
+            print("{}".format(partName), end = " ")
+    
+    print()
     cursor.close()
     return
 
