@@ -404,16 +404,13 @@ def devTools():
         print("*** DEV COMMANDS ***")
         choice = input("""
                        1: Create 100 machines of four types
-                       2: Drop all machines
-                       3: View all machines
+                       2: View all machines
                        Q: Back
                        
                        Please Input Choice: """)
         if choice == "1":
             devInsertMachines()
         elif choice == "2":
-            devDropAllMachines()
-        elif choice == "3":
             viewAllMachines()
         elif choice.lower() == 'q':
             loop = 0
@@ -447,15 +444,6 @@ def devInsertMachines():
         
     print("DEV TOOL: Added 100 machines")
     WaitForKeypress()
-    
-def devDropAllMachines():
-    ClearConsole()
-    query = "TRUNCATE TABLE machine"
-    cursor = cnx.cursor()
-    cursor.execute(query)
-    
-    print("DEV TOOL: All machines have been dropped")
-    WaitForKeypress()
-            
+         
 
 main()
