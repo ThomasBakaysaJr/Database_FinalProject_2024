@@ -11,7 +11,7 @@ cnx = mysql.connector.connect(user='freedb_FcamUser', password='eqxkFmcDr6PE9#*'
                               autocommit = True)
 
 #used for the text inputs
-backOutText = " Enter nothing to back out: "
+backOutText = " Press Enter to go back: "
 
 def main():
     menu()
@@ -35,7 +35,7 @@ def menu():
                        7: View Technicians
                        -----------------
                        Q: Quit
-                       
+                       -----------------
                        D: Developer Tools
                        
                        Please Input Choice: """)
@@ -90,9 +90,15 @@ def viewAllParts():
         
     cursor.close()
     WaitForKeypress()
-        
+
+#standalone function to clear and list just the technicians
 def viewAllTechnicians():
     ClearConsole()
+    listTechnicians()
+    WaitForKeypress()
+
+# helper function, just lists the technicians, doesn't clear or wait
+def listTechnicians():
     cursor = cnx.cursor()
     query = "select techID, techName from technician"
     
@@ -101,7 +107,6 @@ def viewAllTechnicians():
         print ("ID: {}, NAME: {}".format(techID, techName))       
         
     cursor.close()
-    WaitForKeypress()
 
 # insert one machine into the database
 def insertMachine():
@@ -124,7 +129,7 @@ def insertMachine():
 '''
 Creates a work ticket for a machine ID. Ask if user wishes to assign it immediately or wait.
 
-TODO:
+TO DO:
 Loop asking for parts needed for the work ticket
 call "fcam_InsertTicketPart(inTickID, inPartID), you can use the 
 '''
@@ -145,6 +150,19 @@ def createTicket(): ####################################################
     cursor.close()
     
     print("Ticket # " + str(resultArgs[1]) + " has been created.") 
+
+    print("List of Current Parts:")
+    # copied from viewAllParts above, just minus the waiting
+    cursor = cnx.cursor()
+    query = "select partID, partName, cost from part"
+    
+    cursor.execute(query)
+    for (partID, partName, cost) in cursor:
+        print ("NO. {}, NAME: {},   ${}".format(partID, partName, cost))
+        
+    cursor.close()
+
+    insertWorkTicketPart(resultArgs[1])
     print("Would you like to assign this Work Ticket to a technician now?")
     if WaitForYesNo():
         assignTech(resultArgs[1])
@@ -172,18 +190,41 @@ def assignTech(inTickID):  ################################################
             return    
         inTickID = returnTup[1]
 
-    inPrompt = "Enter tech ID (either 420 or 690)." + backOutText
-    returnTup = checkInput(inPrompt, True)
-    if not returnTup[1]:
-        return
+    listTechnicians()
+    while True:
+        try:
+            inTechID = int(input("Enter tech ID: "))
+            cursor = cnx.cursor()
+            args = (inTickID, inTechID)
+            cursor.callproc("fcam_AssignWorkTicket", args) 
 
-    cursor = cnx.cursor()
-    args = (inTickID, returnTup[1])
-    cursor.callproc("fcam_AssignWorkTicket", args) 
-
-    cursor.close()
+            cursor.close()
+            break
+        except:
+            print("Please input valid technician ID.")
+            continue
 
     ClearConsole()
+
+def insertWorkTicketPart(inTickID):
+    loopVar = 'g'
+    while loopVar != 'q':
+        try:
+            inPartID = int(input("Enter part ID: ")) # remove "required"
+        except:
+            print ("Please enter a valid part number.")
+            continue
+        #the try is to catch invalid partIDs (such as violating foreign keys)
+        try:
+            cursor = cnx.cursor()
+            args = (inTickID, inPartID)
+            cursor.callproc("fcam_InsertWorkTicketPart", args)
+            cursor.close
+        except:
+            print("Please input a valid part number.")
+            continue
+        loopVar = input("Enter y to enter another part or q to quit: ")
+
 
 def viewTickets():
     ClearConsole()
@@ -235,7 +276,8 @@ def updateTicketsMenu():
         choice = input("""
                        1: Assign Work Ticket to a Technician
                        2: Mark Work Ticket as Complete
-                       3: View all Work Tickets
+                       3: Delete Work Ticket
+                       4: View all Work Tickets
                        Q: Back
                        
                        Please Input Choice: """)
@@ -244,7 +286,9 @@ def updateTicketsMenu():
             assignTech(-1)
         elif choice == "2": #Mark work ticket as complete
             completeWorkTicket()
-        elif choice == "3": #View all work tickets
+        elif choice == "3": #Delete work ticket
+            deleteWorkTicket()
+        elif choice == "4": #View all work tickets
             viewTickets()
         elif choice.lower() == 'q':
             loop = 0
@@ -274,6 +318,26 @@ def completeWorkTicket():
     cursor.close()
     ClearConsole()
 
+def deleteWorkTicket():
+    ClearConsole()
+
+    print("Delete Work Ticket")
+
+    while True:
+        try:
+            print("Enter nothing to return")
+            inTickID = int(input("Ticket no. to be deleted: "))
+
+            cursor = cnx.cursor()
+            args = (inTickID,)
+            cursor.callproc("fcam_DeleteWorkTicket", args)
+            cursor.close
+
+            print ("Ticket no. " + str(inTickID) + " deleted.")
+            WaitForKeypress()
+            break
+        except:
+            break
 
 def WaitForKeypress():
     input("Press Enter to continue...")

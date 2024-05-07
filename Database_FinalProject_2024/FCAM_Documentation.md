@@ -53,10 +53,10 @@ Table for all Parts avaiable.
 ### partOrder
 Associative table. Relates Work Tickets to the Parts required since one Work Ticket can have multiple parts associated with it.
 
-| Attribute 	| Type 		| Description 
-| --- 			| --- 		| --- 
-| `tickID` 		| int 		| Ticket ID 
-| `partID` 		| int 		| Part ID
+| Attribute 	| Type 		| Description 	| Foreign Key Reference
+| --- 			| --- 		| --- 			| ---
+| `tickID` 		| int 		| Ticket ID 	| workticket
+| `partID` 		| int 		| Part ID		| part
 
 ---
 
@@ -73,11 +73,11 @@ Table for all technicians
 ### workTicket
 Table for all Work Tickets, completed or otherwise. Incomplete Work Tickets will have the attribute `dateCompleted` as `NULL`.
 
-| Attribute 		| Type 		| Description 
-| --- 				| --- 		| --- 
-| `tickID` 			| int 		| Ticket ID 
-| `machID` 			| int 		| Machine ID
-| `techAssigned`	| int 		| Tech ID of the assigned technician
+| Attribute 		| Type 		| Description 										|Foreign Key Reference
+| --- 				| --- 		| --- 												| ---
+| `tickID` 			| int 		| Ticket ID 										| 
+| `machID` 			| int 		| Machine ID										| machine
+| `techAssigned`	| int 		| Tech ID of the assigned technician				| technician
 | `dateCreated`		| date 		| Date ticket was created
 | `dateAssigned`	| date 		| Date ticket was assigned to a technician [^1]
 | `dateCompleted` 	| date 		| Date ticket was completed / closed
@@ -115,6 +115,7 @@ Where `dateCompleted` is `NULL`
 | `machID` 			| int 		| Machine ID
 | `machName` 		| char(255) | Machine name
 | `dateCreated` 	| date 		| Date ticket was created
+| 'dateCompleted'	| date		| Date ticket was completed (will be none)
 | `techAssigned` 	| int 		| Tech ID of the assigned technician
 
 ---
@@ -202,7 +203,13 @@ Insert **ONE** part with partID of `inPartID` for ticketID of `inTickID` into th
 
 ---
 
+### fcam_DeleteWorkTicket (inTickID)
 
+Delete a work ticket with tickID of 'inTickID'.
+
+| Parameter 	| Type 			| Description 
+| --- 			| --- 			| --- 
+| `inTickID` 	| int		 	| `tickID` of the Work Ticket to be deleted 
 
 
 ## Notes
