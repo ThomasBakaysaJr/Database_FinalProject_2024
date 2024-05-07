@@ -145,7 +145,6 @@ View of just the technician IDs.
 ---
 
 # Stored Procedures
- WARNING: [^2]
 
 ---
 ---
@@ -212,8 +211,3 @@ Delete a work ticket with tickID of 'inTickID'.
 | `inTickID` 	| int		 	| `tickID` of the Work Ticket to be deleted 
 
 
-## Notes
-
-[^1]: Currently work tickets should be automatically assigned as they are created in the python application.
-
-[^2]: No safeguards exists at the moment. Our procedures assume that the input data is correct.
